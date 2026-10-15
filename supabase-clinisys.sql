@@ -24,12 +24,14 @@ create table if not exists public.clinisys_invitations (
   id uuid primary key default gen_random_uuid(),
   email text not null,
   display_name text not null check (char_length(trim(display_name)) between 1 and 120),
+  role text not null default 'member' check (role in ('admin','member')),
   token_hash text not null unique,
   created_by uuid not null references auth.users(id) on delete restrict,
   expires_at timestamptz not null,
   accepted_at timestamptz,
   created_at timestamptz not null default now()
 );
+alter table public.clinisys_invitations add column if not exists role text not null default 'member';
 create index if not exists clinisys_invitations_created_by_idx on public.clinisys_invitations(created_by);
 
 create table if not exists public.clinisys_tasks (
