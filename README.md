@@ -1,2 +1,0 @@
-# Clinisys-infogerance
-Clinisys Infogérance
