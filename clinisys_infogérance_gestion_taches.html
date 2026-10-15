@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CliniSys infogérance — Suivi du travail</title>
+<style>
+:root{--navy:#172b4d;--blue:#315b96;--pale:#eef3fa;--line:#dce3ed;--ink:#243247;--muted:#718096;--green:#208567;--orange:#c77b18;--red:#bd4b4b}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#f4f6fa;color:var(--ink)}
+header{background:linear-gradient(120deg,#172b4d,#315b96);color:white;padding:24px clamp(16px,4vw,48px);display:flex;justify-content:space-between;gap:18px;align-items:center;flex-wrap:wrap}
+h1{margin:0;font-size:25px}header p{margin:7px 0 0;color:#dce8f8;font-size:14px}.badge{background:#ffffff20;border:1px solid #ffffff55;padding:8px 12px;border-radius:20px;font-size:12px}
+main{max-width:1500px;margin:auto;padding:22px clamp(12px,3vw,36px) 44px}
+.toolbar{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}.btn{border:0;border-radius:9px;padding:10px 14px;font-weight:650;cursor:pointer;background:var(--blue);color:white}.btn.secondary{background:white;color:var(--navy);border:1px solid var(--line)}.btn.danger{background:#fff0f0;color:var(--red);border:1px solid #f3d0d0}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:13px;margin-bottom:20px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:17px;box-shadow:0 2px 8px #182b4b08}.card .label{color:var(--muted);font-size:13px}.card .num{font-size:28px;font-weight:750;margin:8px 0 3px}.card small{color:var(--muted)}
+.panel{background:white;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px #182b4b08}.panelhead{padding:17px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.panelhead h2{font-size:17px;margin:0}.filters{display:flex;gap:8px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--line)}
+input,select,textarea{font:inherit;padding:10px 11px;border:1px solid #cbd5e1;border-radius:8px;background:white;color:var(--ink);min-width:0}input:focus,select:focus,textarea:focus{outline:2px solid #b6cdf0;border-color:#6d91c8}.filters input{flex:1;min-width:200px}.filters select{min-width:150px}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1050px}th{background:#e9eef6;color:#334766;text-align:left;font-size:12px;letter-spacing:.03em;text-transform:uppercase;padding:12px 13px;position:sticky;top:0}td{padding:12px 13px;border-bottom:1px solid #edf0f5;font-size:13px;vertical-align:middle}tr:hover td{background:#f9fbfe}.pill{display:inline-block;border-radius:30px;padding:5px 8px;font-size:11px;font-weight:700;background:#edf2f7}.pill.done{background:#e2f5ed;color:#167653}.pill.mid{background:#fff2d9;color:#8a5a0a}.pill.low{background:#fde8e8;color:#a33434}.progress{height:7px;background:#e8edf4;border-radius:10px;overflow:hidden;margin-top:6px;min-width:80px}.progress span{display:block;height:100%;background:linear-gradient(90deg,#79c9ad,#208567);border-radius:10px}.percent{font-weight:700}.actions{display:flex;gap:5px}.iconbtn{padding:6px 8px;border:1px solid var(--line);background:white;border-radius:6px;cursor:pointer}.empty{text-align:center;color:var(--muted);padding:30px}
+footer{color:var(--muted);font-size:12px;padding:14px 2px}
+dialog{border:0;border-radius:15px;width:min(720px,94vw);padding:0;box-shadow:0 20px 80px #101e3880}dialog::backdrop{background:#14233d80}.modalhead{padding:18px 22px;background:var(--pale);display:flex;justify-content:space-between;align-items:center}.modalhead h2{margin:0;font-size:18px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:20px 22px}.field{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:#52627a}.field.full{grid-column:1/-1}.field input,.field select,.field textarea{width:100%;font-weight:400;font-size:14px}.modalfoot{padding:15px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+@media(max-width:760px){.cards{grid-template-columns:repeat(2,1fr)}h1{font-size:21px}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.card .num{font-size:24px}}
+</style>
+</head>
+<body>
+<header><div><h1>CliniSys infogérance <span style="font-weight:400">| Suivi du travail</span></h1><p>Réclamations clients, tâches, responsables et avancement — tout au même endroit.</p></div><span class="badge">Tableau de bord opérationnel</span></header>
+<main>
+<div class="toolbar"><button class="btn" id="addBtn">＋ Nouvelle réclamation / tâche</button><button class="btn secondary" id="exportBtn">⇩ Exporter CSV</button><button class="btn secondary" id="resetBtn">Réinitialiser les données de départ</button></div>
+<section class="cards">
+<div class="card"><div class="label">Total des dossiers</div><div class="num" id="total">0</div><small>Réclamations et tâches suivies</small></div>
+<div class="card"><div class="label">Avancement moyen</div><div class="num" id="avg">0%</div><small>Progression globale</small></div>
+<div class="card"><div class="label">À démarrer</div><div class="num" id="todo">0</div><small>Avancement à 0 %</small></div>
+<div class="card"><div class="label">Presque terminés</div><div class="num" id="near">0</div><small>Avancement ≥ 80 %</small></div>
+</section>
+<section class="panel">
+<div class="panelhead"><h2>Réclamations & tâches</h2><span id="count" style="font-size:12px;color:#718096"></span></div>
+<div class="filters"><input id="search" placeholder="Rechercher client, module, responsable, observation…"><select id="assignee"><option value="">Tous les responsables</option></select><select id="status"><option value="">Tous les avancements</option><option value="todo">À démarrer (0 %)</option><option value="progress">En cours (1–79 %)</option><option value="near">Presque terminé (80–99 %)</option><option value="done">Terminé (100 %)</option></select><select id="sort"><option value="date">Trier : date récente</option><option value="progress">Trier : avancement faible</option><option value="client">Trier : client A–Z</option></select></div>
+<div class="tablewrap"><table><thead><tr><th>Réclamation / tâche</th><th>Client</th><th>Affecté à</th><th>Date</th><th>Date d’affectation</th><th>Avancement</th><th>État</th><th>Observation / prochaine action</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table><div id="empty" class="empty" hidden>Aucun dossier ne correspond à votre recherche.</div></div>
+</section>
+<footer>Les modifications sont enregistrées automatiquement dans le stockage local de ce navigateur. Exportez régulièrement un CSV pour conserver une copie. Les données ne sont pas synchronisées entre plusieurs appareils.</footer>
+</main>
+<dialog id="editor"><form id="form"><div class="modalhead"><h2 id="formTitle">Ajouter un dossier</h2><button type="button" class="iconbtn" id="closeBtn">✕</button></div><div class="formgrid">
+<input type="hidden" id="id">
+<label class="field">Réclamation / tâche *<input id="issue" required placeholder="Ex. DMI, Restauration, Migration bloc"></label>
+<label class="field">Client *<input id="client" required placeholder="Nom du client"></label>
+<label class="field">Responsable<input id="owner" placeholder="Nom du responsable"></label>
+<label class="field">Date de création<input id="date" type="date"></label>
+<label class="field">Date d'échéance<input id="due" type="date"></label>
+<label class="field">Taux de réalisation (%)<input id="progressInput" type="number" min="0" max="100" value="0" required></label>
+<label class="field full">Observation / prochaine action<textarea id="notes" rows="3" placeholder="Blocage, action suivante, besoin client…"></textarea></label>
+</div><div class="modalfoot"><button type="button" class="btn secondary" id="cancelBtn">Annuler</button><button class="btn" type="submit">Enregistrer</button></div></form></dialog>
+<script>
+const initial = [["Gmao mise en place", "Clinique madina", "Montasar baklouti", "2026-10-12", "2026-10-13", 50, "attend installation gmao android"], ["rapport dactivité web", "Clinique madina", "Montasar baklouti", "2026-10-12", "", 10, "verification difference web et VB"], ["Restauration", "Clinique alya", "Montasar baklouti", "", "", 30, ""], ["Restauration", "Clinique ibn nafis", "Montasar baklouti", "", "", 70, ""], ["Commercial", "Sanidor", "Montasar baklouti", "", "", 0, "Convenu 6000.000TTC"], ["DIALYSE", "Clinique bassatine", "Ismail Germazi", "", "", 60, ""], ["Pharmacie", "Clinique bassatine", "Ala ghorbel", "", "", 90, ""], ["Bloc", "Clinique bassatine", "Ala ghorbel", "", "", 0, ""], ["Dispensation", "Clinique bassatine", "Ala ghorbel", "", "", 0, ""], ["Rfid", "FSI", "Naji belgasmi", "", "", 90, ""], ["Rfid", "Clinique ibn nafis", "", "", "", 10, ""], ["DMI", "Cinique ibn nafis", "Ismail germazi", "", "", 5, ""], ["DMI", "Clinique erriadh", "houssem+mohamed damak", "", "", 90, ""], ["DMI", "Clinique essalama", "Ala ghorbel", "", "", 90, "verification circuit"], ["Bloc", "Clinique alya", "Ismail germazi", "", "", 0, "Migration bloc"], ["Economat", "hotel oasis", "Montasar baklouti", "", "", 70, ""], ["Commercial", "Semo gremda", "montasar baklouti", "", "", 80, "Reste des demandes equipe wissem"], ["Paie", "marie curie", "Houssem", "", "", 0, "devis besoin 6 H/J"], ["Achat pharmacie", "Clinique ibn nafis", "Ismail germazi", "", "2026-10-16", 0, ""], ["Centre urgence", "Clinique ibn nafis", "Ismail Germazi", "", "", 90, ""], ["Crm", "Clinique alya", "Montasar baklouti", "", "", 95, ""], ["Cabinet Medicale", "Dr chiraz bouchaima", "Montasar baklouti", "", "", 0, "Démo"], ["inventaire", "Sorimex", "Houssem", "", "", 0, ""], ["etat TVA", "Sorimex", "Montasar baklouti", "", "", 0, ""], ["DMI", "Clinique Meigne", "Houssem+Ismail", "", "", 0, ""], ["DMI", "Clinique enour sfax", "Houssem+ismail", "", "", 0, ""], ["DMI Android", "Clinique Errahma", "Houssem", "", "", 0, ""], ["Financier", "Clinique alya", "Montasar baklouti", "", "", 70, ""], ["Financier", "Clinique erriadh", "Montasar baklouti", "", "", 70, ""], ["Laboratoir", "zied abidi", "Ismail Germazi", "", "", 80, ""], ["Commercial", "Ste Hajji Gabes", "Montasar baklouti", "", "", 10, "Besoin"], ["DMI", "Clinique errayhane", "Houssem", "", "", 0, ""], ["Pharmacie", "Clinique errayhane", "Houssem", "", "", 0, ""], ["Gravure", "Clinique essalama", "Moez Hadrich", "", "", 0, ""], ["Gravure", "Clinique les oliviers", "Moez Hadrich", "", "", 0, ""], ["Gravure", "Clinique Chartage", "M", "", "", 0, ""]].map((r,i)=>({id:String(i+1),issue:r[0],client:r[1],owner:r[2],date:r[3],due:r[4],progress:r[5],notes:r[6]}));
+let items;
+try { items=JSON.parse(localStorage.getItem("clinitrack-items-v2")) || initial.map(x=>({...x})); } catch { items=initial.map(x=>({...x})); }
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const save=()=>localStorage.setItem("clinitrack-items-v2",JSON.stringify(items));
+const fmt=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-FR"):"—";
+function state(p){return p===100?["Terminé","done"]:p>=80?["Presque terminé","mid"]:p===0?["À démarrer","low"]:["En cours","mid"]}
+function render(){
+ const avg=items.length?Math.round(items.reduce((s,x)=>s+Number(x.progress),0)/items.length):0;
+ $("total").textContent=items.length;$("avg").textContent=avg+"%";$("todo").textContent=items.filter(x=>+x.progress===0).length;$("near").textContent=items.filter(x=>+x.progress>=80).length;
+ const ownerVal=$("assignee").value;const owners=[...new Set(items.map(x=>x.owner).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ $("assignee").innerHTML='<option value="">Tous les responsables</option>'+owners.map(o=>`<option ${o===ownerVal?"selected":""} value="${esc(o)}">${esc(o)}</option>`).join("");
+ const q=$("search").value.toLowerCase(), st=$("status").value, sort=$("sort").value;
+ let list=items.filter(x=>[x.issue,x.client,x.owner,x.notes].join(" ").toLowerCase().includes(q)&&(!ownerVal||x.owner===ownerVal)&&(!st||(st==="todo"?+x.progress===0:st==="progress"?+x.progress>0&&+x.progress<80:st==="near"?+x.progress>=80&&+x.progress<100:+x.progress===100)));
+ list.sort(sort==="progress"?(a,b)=>a.progress-b.progress:sort==="client"?(a,b)=>a.client.localeCompare(b.client): (a,b)=>(b.date||"").localeCompare(a.date||""));
+ $("count").textContent=`${list.length} dossier(s) affiché(s) sur ${items.length}`;
+ $("rows").innerHTML=list.map(x=>{const [label,cls]=state(+x.progress);return `<tr><td><strong>${esc(x.issue)}</strong><br><span class="pill ${cls}">${label}</span></td><td>${esc(x.client)}</td><td>${esc(x.owner||"—")}</td><td>${fmt(x.date)}</td><td>${fmt(x.due)}</td><td><span class="percent">${+x.progress}%</span><div class="progress"><span style="width:${Math.max(0,Math.min(100,+x.progress))}%"></span></div></td><td><span class="pill ${+x.progress===100?"done":"mid"}">${+x.progress===100?"Clôturée":"Ouverte"}</span>${x.closedAt?`<br><small>Le ${fmt(x.closedAt)}</small>`:""}</td><td>${esc(x.notes||"—")}</td><td><div class="actions"><button class="iconbtn" title="Modifier" onclick="editItem('${x.id}')">✎</button>${+x.progress===100?`<button class="iconbtn" title="Rouvrir la tâche" onclick="reopenItem('${x.id}')">↶</button>`:`<button class="iconbtn" title="Clôturer la tâche" onclick="closeItem('${x.id}')">✓</button>`}<button class="iconbtn" title="Supprimer" onclick="deleteItem('${x.id}')">🗑</button></div></td></tr>`}).join("");
+ $("empty").hidden=list.length>0;
+}
+function openForm(x){$("form").reset();$("id").value=x?.id||"";$("issue").value=x?.issue||"";$("client").value=x?.client||"";$("owner").value=x?.owner||"";$("date").value=x?.date||"";$("due").value=x?.due||"";$("progressInput").value=x?.progress??0;$("notes").value=x?.notes||"";$("formTitle").textContent=x?"Modifier le dossier":"Ajouter un dossier";$("editor").showModal();}
+window.editItem=id=>openForm(items.find(x=>x.id===id));
+window.closeItem=id=>{const x=items.find(x=>x.id===id);if(x&&confirm(`Clôturer la tâche « ${x.issue} — ${x.client} » ?`)){x.progress=100;x.closedAt=new Date().toISOString().slice(0,10);save();render();}};
+window.reopenItem=id=>{const x=items.find(x=>x.id===id);if(x&&confirm(`Rouvrir la tâche « ${x.issue} — ${x.client} » ?`)){x.progress=99;delete x.closedAt;save();render();}};
+window.deleteItem=id=>{const x=items.find(x=>x.id===id);if(x&&confirm(`Supprimer « ${x.issue} — ${x.client} » ?`)){items=items.filter(x=>x.id!==id);save();render();}};
+$("addBtn").onclick=()=>openForm();$("closeBtn").onclick=$("cancelBtn").onclick=()=>$("editor").close();
+$("form").onsubmit=e=>{e.preventDefault();const id=$("id").value||String(Date.now());const item={id,issue:$("issue").value.trim(),client:$("client").value.trim(),owner:$("owner").value.trim(),date:$("date").value,due:$("due").value,progress:Math.max(0,Math.min(100,Number($("progressInput").value))),notes:$("notes").value.trim()};const idx=items.findIndex(x=>x.id===id);if(idx>=0)items[idx]=item;else items.unshift(item);save();$("editor").close();render();};
+["search","assignee","status","sort"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",render));
+$("exportBtn").onclick=()=>{const cols=["issue","client","owner","date","due","progress","notes"],head=["Réclamation / tâche","Client","Responsable","Date","Échéance","Avancement (%)","Observation"];const csv=[head,...items.map(x=>cols.map(k=>x[k]??""))].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(";")).join("\r\n");const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="suivi-reclamations-clinitrack.csv";a.click();URL.revokeObjectURL(a.href);};
+$("resetBtn").onclick=()=>{if(confirm("Remplacer les données actuelles par le tableau de départ ? Cette action efface vos modifications locales.")){items=initial.map(x=>({...x}));save();render();}};
+render();
+</script>
+</body></html>
