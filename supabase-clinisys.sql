@@ -30,6 +30,7 @@ create table if not exists public.clinisys_invitations (
   accepted_at timestamptz,
   created_at timestamptz not null default now()
 );
+create index if not exists clinisys_invitations_created_by_idx on public.clinisys_invitations(created_by);
 
 create table if not exists public.clinisys_tasks (
   id text primary key,
