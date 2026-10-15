@@ -17,25 +17,25 @@ Deno.serve(async req => {
     if (body?.action === "create") {
       const { data: member } = await admin.from("clinisys_workspace_members").select("role").eq("user_id", user.id).maybeSingle();
       if (member?.role !== "admin") return json({ error: "Droits administrateur requis." }, 403);
-      const email = String(body.email ?? "").trim().toLowerCase(), displayName = String(body.displayName ?? "").trim(), role = body.role === "admin" ? "admin" : "member";
-      if (!email || !displayName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Adresse e-mail ou nom invalide." }, 400);
+      const email = String(body.email ?? "").trim().toLowerCase() || null, phone = String(body.phone ?? "").trim(), displayName = String(body.displayName ?? "").trim(), role = body.role === "admin" ? "admin" : "member";
+      if (!phone || !displayName || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return json({ error: "Numéro WhatsApp ou nom invalide." }, 400);
       const raw = new Uint8Array(32); crypto.getRandomValues(raw);
       const token = Array.from(raw).map(x => x.toString(16).padStart(2, "0")).join("");
       const expiresAt = new Date(Date.now() + 7 * 86400000).toISOString();
-      const { error } = await admin.from("clinisys_invitations").insert({ email, display_name: displayName, role, token_hash: await sha256(token), created_by: user.id, expires_at: expiresAt });
+      const { error } = await admin.from("clinisys_invitations").insert({ email, phone, display_name: displayName, role, token_hash: await sha256(token), created_by: user.id, expires_at: expiresAt });
       if (error) return json({ error: error.message }, 400);
       const appUrl = "https://alaeddineghorbel.github.io/Clinisys-infogerance/clinisys_infog%C3%A9rance_gestion_taches.html";
-      const inviteUrl = appUrl + "?invite=" + encodeURIComponent(token) + "&email=" + encodeURIComponent(email);
-      const message = "Vous êtes invité(e) à CliniSys Infogérance. Ouvrez ce lien, inscrivez-vous avec cette adresse e-mail, puis confirmez votre e-mail : " + inviteUrl;
+      const inviteUrl = appUrl + "?invite=" + encodeURIComponent(token) + "&phone=" + encodeURIComponent(phone);
+      const message = "Vous êtes invité(e) à CliniSys Infogérance. Ouvrez ce lien, saisissez votre e-mail et confirmez-le : " + inviteUrl;
       return json({ inviteUrl, whatsappUrl: "https://wa.me/?text=" + encodeURIComponent(message), expiresAt });
     }
     if (body?.action === "accept") {
       const token = String(body.token ?? ""), displayName = String(body.displayName ?? "").trim();
       if (!token || !displayName) return json({ error: "Invitation ou nom manquant." }, 400);
-      const { data: invitation } = await admin.from("clinisys_invitations").select("id,email,role,expires_at,accepted_at").eq("token_hash", await sha256(token)).maybeSingle();
+      const { data: invitation } = await admin.from("clinisys_invitations").select("id,email,phone,role,expires_at,accepted_at").eq("token_hash", await sha256(token)).maybeSingle();
       if (!invitation || invitation.accepted_at || new Date(invitation.expires_at).getTime() < Date.now()) return json({ error: "Invitation invalide, expirée ou déjà utilisée." }, 400);
-      if ((user.email ?? "").toLowerCase() !== String(invitation.email).toLowerCase()) return json({ error: "L’adresse e-mail du compte ne correspond pas à l’invitation." }, 403);
-      const { error: profileError } = await admin.from("clinisys_profiles").upsert({ user_id: user.id, display_name: displayName, email: user.email, updated_at: new Date().toISOString() });
+      if (invitation.email && (user.email ?? "").toLowerCase() !== String(invitation.email).toLowerCase()) return json({ error: "L’adresse e-mail du compte ne correspond pas à l’invitation." }, 403);
+      const { error: profileError } = await admin.from("clinisys_profiles").upsert({ user_id: user.id, display_name: displayName, email: user.email, phone: invitation.phone, updated_at: new Date().toISOString() });
       if (profileError) return json({ error: profileError.message }, 400);
       const { error: memberError } = await admin.from("clinisys_workspace_members").upsert({ user_id: user.id, role: invitation.role === "admin" ? "admin" : "member" });
       if (memberError) return json({ error: memberError.message }, 400);
