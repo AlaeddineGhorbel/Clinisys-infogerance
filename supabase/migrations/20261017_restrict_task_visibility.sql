@@ -11,13 +11,13 @@ drop policy if exists "Members can update own unfinished tasks" on public.clinis
 drop policy if exists "Admins can delete only unstarted tasks" on public.clinisys_tasks;
 drop policy if exists "Members can delete only own unstarted tasks" on public.clinisys_tasks;
 
-create policy "Admins can read unfinished tasks" on public.clinisys_tasks for select to authenticated using (
+create policy "Admins can read all tasks" on public.clinisys_tasks for select to authenticated using (
   exists (select 1 from public.clinisys_workspace_members m where m.user_id = (select auth.uid()) and m.role = 'admin')
-  and not deleted and coalesce(nullif(item->>'progress','')::numeric,0) < 100
+  and not deleted
 );
-create policy "Members can read own unfinished tasks" on public.clinisys_tasks for select to authenticated using (
+create policy "Members can read own tasks" on public.clinisys_tasks for select to authenticated using (
   exists (select 1 from public.clinisys_workspace_members m where m.user_id = (select auth.uid()) and m.role = 'member')
-  and not deleted and coalesce(nullif(item->>'progress','')::numeric,0) < 100
+  and not deleted
   and lower(coalesce(item->>'owner','')) = lower(coalesce((select p.display_name from public.clinisys_profiles p where p.user_id = (select auth.uid())), ''))
 );
 create policy "Admins can insert unfinished tasks" on public.clinisys_tasks for insert to authenticated with check (
