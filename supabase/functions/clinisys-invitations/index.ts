@@ -1,12 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS", "Content-Type": "application/json" };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: cors });
 async function sha256(value: string) { const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)); return Array.from(new Uint8Array(digest)).map(x => x.toString(16).padStart(2, "0")).join(""); }
 function requestClient(req: Request) { return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } } }); }
 function adminClient() { return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { autoRefreshToken: false, persistSession: false } }); }
-
+function temporaryPassword() { const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%"; const bytes = new Uint8Array(16); crypto.getRandomValues(bytes); return Array.from(bytes, byte => alphabet[byte % alphabet.length]).join(""); }
 
 Deno.serve(async req => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -27,7 +26,7 @@ Deno.serve(async req => {
       if (error) return json({ error: error.message }, 400);
       const appUrl = "https://alaeddineghorbel.github.io/Clinisys-infogerance/clinisys_infog%C3%A9rance_gestion_taches.html";
       const inviteUrl = appUrl + "?invite=" + encodeURIComponent(token);
-      const message = "Invitation CliniSys Infogérance\n\nLien invitation :\n" + inviteUrl + "\n\nCode secours :\n" + token + "\n\nOuvrez le lien, saisissez votre e-mail et confirmez-le. Si le lien ne fonctionne pas, utilisez le code secours dans le formulaire.";
+      const message = "Invitation CliniSys Infogérance\\n\\nLien invitation :\\n" + inviteUrl + "\\n\\nCode secours :\\n" + token + "\\n\\nOuvrez le lien, saisissez votre e-mail et confirmez-le. Si le lien ne fonctionne pas, utilisez le code secours dans le formulaire.";
       return json({ inviteUrl, whatsappUrl: "https://wa.me/?text=" + encodeURIComponent(message), expiresAt });
     }
     if (body?.action === "accept") {
@@ -36,3 +35,26 @@ Deno.serve(async req => {
       const { data: invitation } = await admin.from("clinisys_invitations").select("id,email,phone,role,expires_at,accepted_at").eq("token_hash", await sha256(token)).maybeSingle();
       if (!invitation || invitation.accepted_at || new Date(invitation.expires_at).getTime() < Date.now()) return json({ error: "Invitation invalide, expirée ou déjà utilisée." }, 400);
       if (invitation.email && (user.email ?? "").toLowerCase() !== String(invitation.email).toLowerCase()) return json({ error: "L’adresse e-mail du compte ne correspond pas à l’invitation." }, 403);
+      const { error: profileError } = await admin.from("clinisys_profiles").upsert({ user_id: user.id, display_name: displayName, email: user.email, phone: null, updated_at: new Date().toISOString() });
+      if (profileError) return json({ error: profileError.message }, 400);
+      const { error: memberError } = await admin.from("clinisys_workspace_members").upsert({ user_id: user.id, role: invitation.role === "admin" ? "admin" : "member" });
+      if (memberError) return json({ error: memberError.message }, 400);
+      const { error: acceptError } = await admin.from("clinisys_invitations").update({ accepted_at: new Date().toISOString() }).eq("id", invitation.id);
+      if (acceptError) return json({ error: acceptError.message }, 400);
+      return json({ ok: true, displayName });
+    }
+    if (body?.action === "force_reset_password") {
+      const { data: member } = await admin.from("clinisys_workspace_members").select("role").eq("user_id", user.id).maybeSingle();
+      if (member?.role !== "admin") return json({ error: "Droits administrateur requis." }, 403);
+      const targetUserId = String(body.targetUserId ?? "").trim();
+      if (!targetUserId || targetUserId === user.id) return json({ error: "Utilisateur cible invalide." }, 400);
+      const { data: targetMember } = await admin.from("clinisys_workspace_members").select("user_id").eq("user_id", targetUserId).maybeSingle();
+      if (!targetMember) return json({ error: "Utilisateur introuvable." }, 404);
+      const password = temporaryPassword();
+      const { error } = await admin.auth.admin.updateUserById(targetUserId, { password });
+      if (error) return json({ error: error.message }, 400);
+      return json({ ok: true, temporaryPassword: password, message: "Mot de passe temporaire généré. Communiquez-le directement à l’utilisateur puis demandez-lui de le changer." });
+    }
+    return json({ error: "Action inconnue." }, 400);
+  } catch (error) { return json({ error: error instanceof Error ? error.message : "Erreur serveur." }, 500); }
+});
