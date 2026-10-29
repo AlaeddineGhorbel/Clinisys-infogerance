@@ -17,16 +17,15 @@ Deno.serve(async req => {
     if (body?.action === "create") {
       const { data: member } = await admin.from("clinisys_workspace_members").select("role").eq("user_id", user.id).maybeSingle();
       if (member?.role !== "admin") return json({ error: "Droits administrateur requis." }, 403);
-      const email = String(body.email ?? "").trim().toLowerCase() || null, phone = String(body.phone ?? "").trim(), displayName = String(body.displayName ?? "").trim(), role = body.role === "admin" ? "admin" : "member";
-      if (!phone || !displayName || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return json({ error: "Numéro WhatsApp ou nom invalide." }, 400);
+      const role = body.role === "admin" ? "admin" : "member";
       const raw = new Uint8Array(32); crypto.getRandomValues(raw);
       const token = Array.from(raw).map(x => x.toString(16).padStart(2, "0")).join("");
       const expiresAt = new Date(Date.now() + 7 * 86400000).toISOString();
-      const { error } = await admin.from("clinisys_invitations").insert({ email, phone, display_name: displayName, role, token_hash: await sha256(token), created_by: user.id, expires_at: expiresAt });
+      const { error } = await admin.from("clinisys_invitations").insert({ email: null, phone: null, display_name: null, role, token_hash: await sha256(token), created_by: user.id, expires_at: expiresAt });
       if (error) return json({ error: error.message }, 400);
       const appUrl = "https://alaeddineghorbel.github.io/Clinisys-infogerance/clinisys_infog%C3%A9rance_gestion_taches.html";
-      const inviteUrl = appUrl + "?invite=" + encodeURIComponent(token) + "&phone=" + encodeURIComponent(phone);
-      const message = "Vous êtes invité(e) à CliniSys Infogérance. Ouvrez ce lien, saisissez votre e-mail et confirmez-le : " + inviteUrl;
+      const inviteUrl = appUrl + "?invite=" + encodeURIComponent(token);
+      const message = "Invitation CliniSys Infogérance\n\nLien invitation :\n" + inviteUrl + "\n\nCode secours :\n" + token + "\n\nOuvrez le lien, saisissez votre e-mail et confirmez-le. Si le lien ne fonctionne pas, utilisez le code secours dans le formulaire.";
       return json({ inviteUrl, whatsappUrl: "https://wa.me/?text=" + encodeURIComponent(message), expiresAt });
     }
     if (body?.action === "accept") {
