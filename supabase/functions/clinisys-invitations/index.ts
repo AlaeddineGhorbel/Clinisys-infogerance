@@ -26,7 +26,7 @@ Deno.serve(async req => {
       if (error) return json({ error: error.message }, 400);
       const appUrl = "https://alaeddineghorbel.github.io/Clinisys-infogerance/clinisys_infog%C3%A9rance_gestion_taches.html";
       const inviteUrl = appUrl + "?invite=" + encodeURIComponent(token);
-      const message = "Invitation CliniSys Infogérance\\n\\nLien invitation :\\n" + inviteUrl + "\\n\\nCode secours :\\n" + token + "\\n\\nOuvrez le lien, saisissez votre e-mail et confirmez-le. Si le lien ne fonctionne pas, utilisez le code secours dans le formulaire.";
+      const message = "Invitation CliniSys Infogérance\n\nLien d’invitation :\n" + inviteUrl + "\n\nCode de secours :\n" + token + "\n\nOuvrez le lien, saisissez votre e-mail et confirmez-le. Si le lien ne fonctionne pas, utilisez le code de secours dans le formulaire.";
       return json({ inviteUrl, token, whatsappUrl: "https://wa.me/?text=" + encodeURIComponent(message), expiresAt });
     }
     if (body?.action === "accept") {
