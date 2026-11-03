@@ -20,7 +20,6 @@ dialog{border:0;border-radius:15px;width:min(720px,94vw);padding:0;box-shadow:0 
 @media(max-width:760px){.cards{grid-template-columns:repeat(2,1fr)}h1{font-size:21px}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.card .num{font-size:24px}}
 body.auth-required main{display:none}
 .admin-page{display:none!important}body.is-admin .admin-page:not(.page-hidden){display:block!important}.admin-nav{display:none!important}body.is-admin .admin-nav{display:inline-flex!important}.page-hidden{display:none!important}body.analytics-open .cards,body.analytics-open #taskListPanel{display:none!important}.dashstats-summary{margin:0 15px 16px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}.dashstats-summary .panelhead{padding:14px 16px}.dashstats-summary .dashkpis{grid-template-columns:repeat(4,minmax(0,1fr));padding-top:0}@media(max-width:650px){.dashstats-summary{margin:0 10px 12px}.dashstats-summary .dashkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
-#statistics .dashkpis{grid-template-columns:repeat(4,minmax(0,1fr))}#statistics .dashcross{margin:0 15px 16px}
 .auth-login #authNameWrap,.auth-login #authInviteWrap,.auth-login #signOutBtn{display:none!important}.auth-newpassword #authEmailWrap,.auth-newpassword #authNameWrap,.auth-newpassword #authInviteWrap,.auth-newpassword #signupBtn{display:none!important}.auth-account #authNameWrap,.auth-account #authInviteWrap,.auth-account #authEmailWrap,.auth-account #authPasswordWrap,.auth-account #signupBtn,.auth-account #authSubmit{display:none!important}.auth-account #signOutBtn{display:inline-flex!important}
 .auth-signup #signupBtn{display:none!important}
 /* Présentation responsive : mêmes fonctions, lecture plus claire sur petit écran. */
@@ -46,7 +45,14 @@ body{background:#f7f9fc;line-height:1.4}header{box-shadow:0 4px 18px #172b4d24}h
 <div class="dashkpis"><div class="dashkpi"><span>Total des tâches</span><strong id="dTotal">0</strong><small>Enregistrées</small></div><div class="dashkpi"><span>Tâches en cours</span><strong id="dProgress">0</strong><small>Avancement de 1 à 99 %</small></div><div class="dashkpi"><span>À démarrer</span><strong id="dTodo">0</strong><small>Avancement à 0 %</small></div><div class="dashkpi"><span>Clôturées</span><strong id="dClosed">0</strong><small>Tâches réalisées</small></div><div class="dashkpi"><span>En retard</span><strong id="dLate">0</strong><small>Échéance dépassée</small></div><div class="dashkpi"><span>Avancement moyen</span><strong id="dAvg">0%</strong><small>Sur la sélection</small></div><div class="dashkpi"><span>Taux de réalisation</span><strong id="dRate">0%</strong><small>Clôturées / total</small></div></div>
 <div class="dashgrid"><article class="dashbox"><h3>Par client</h3><div id="dashByClient"></div></article><article class="dashbox"><h3>Par module / tâche</h3><div id="dashByModule"></div></article><article class="dashbox"><h3>Par responsable</h3><div id="dashByOwner"></div></article></div>
 
-<div class="dashstats-summary"><div class="panelhead"><div><h2>Statistiques détaillées</h2><small style="color:var(--muted)">Synthèse par client, module et responsable</small></div></div><div class="dashkpis">
+<div class="dashstats-summary"><div class="panelhead"><div><h2>Statistiques détaillées</h2><small style="color:var(--muted)">Synthèse par client, module et responsable</small></div></div>
+<div class="dashkpis">
+<div class="dashkpi"><span>Clients suivis</span><strong id="sClients">0</strong><small>Clients distincts</small></div>
+<div class="dashkpi"><span>Modules / tâches</span><strong id="sModules">0</strong><small>Catégories distinctes</small></div>
+<div class="dashkpi"><span>Responsables</span><strong id="sOwners">0</strong><small>Personnes affectées</small></div>
+<div class="dashkpi"><span>Taux de clôture</span><strong id="sCompletion">0%</strong><small>Sur la sélection filtrée</small></div>
+</div></div>
+<div class="dashkpis">
 <div class="dashkpi"><span>Clients suivis</span><strong id="sClients">0</strong><small>Clients distincts</small></div></div>
 
 <section class="panel" id="taskListPanel">
