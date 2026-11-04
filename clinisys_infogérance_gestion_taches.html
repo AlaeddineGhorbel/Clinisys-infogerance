@@ -48,8 +48,8 @@ body{background:#f7f9fc;line-height:1.4}header{box-shadow:0 4px 18px #172b4d24}h
 <dialog id="editor"><form id="form"><div class="modalhead"><h2 id="formTitle">Ajouter un dossier</h2><button type="button" class="iconbtn" id="closeBtn">✕</button></div><div class="formgrid">
 <input type="hidden" id="id">
 <label class="field">Réclamation / tâche *<input id="issue" required placeholder="Ex. DMI, Restauration, Migration bloc"></label>
-<label class="field">Client *<input id="client" required placeholder="Nom du client"></label>
-<label class="field">Responsable<input id="owner" list="ownerOptions" placeholder="Nom du responsable"><datalist id="ownerOptions"></datalist></label>
+<label class="field">Client *<input id="client" list="clientOptions" required placeholder="Choisir ou saisir un client"><datalist id="clientOptions"></datalist><small style="font-weight:400;color:#718096">Choisissez un client existant ou saisissez un nouveau nom.</small></label>
+<label class="field">Responsable<input id="owner" list="ownerOptions" placeholder="Choisir ou saisir un responsable"><datalist id="ownerOptions"></datalist><small style="font-weight:400;color:#718096">La liste se complète avec les responsables déjà utilisés.</small></label>
 <label class="field">Date de création<input id="date" type="date"></label>
 <label class="field">Date d'échéance<input id="due" type="date"></label>
 <label class="field">Taux de réalisation (%)<input id="progressInput" type="number" min="0" max="100" value="0" required></label>
@@ -113,9 +113,10 @@ function render(){
  const visibleItems=active()?items:[];
  const avg=visibleItems.length?Math.round(visibleItems.reduce((s,x)=>s+Number(x.progress),0)/visibleItems.length):0;
  $("total").textContent=visibleItems.length;$("avg").textContent=avg+"%";$("todo").textContent=visibleItems.filter(x=>!isClosed(x)&&+x.progress===0).length;$("near").textContent=visibleItems.filter(x=>!isClosed(x)&&+x.progress>=80&&+x.progress<100).length;
- const ownerVal=$("assignee").value;const owners=[...new Set([...visibleItems.map(x=>x.owner),...profiles.map(x=>x.display_name)].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ const ownerVal=$("assignee").value;const owners=[...new Set([...visibleItems.map(x=>x.owner),...profiles.map(x=>x.display_name)].filter(Boolean))].sort((a,b)=>a.localeCompare(b));const clients=[...new Set(visibleItems.map(x=>String(x.client||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
  $("assignee").innerHTML='<option value="">Tous les responsables</option>'+owners.map(o=>`<option ${o===ownerVal?"selected":""} value="${esc(o)}">${esc(o)}</option>`).join("");
  $("ownerOptions").innerHTML=owners.map(o=>`<option value="${esc(o)}"></option>`).join("");
+ $("clientOptions").innerHTML=clients.map(o=>`<option value="${esc(o)}"></option>`).join("");
  const q=$("search").value.toLowerCase(), st=$("status").value, sort=$("sort").value;
  const columnValue=(x,key)=>key==="status"?state(+x.progress,isClosed(x))[0].toLowerCase():key==="progress"?String(x.progress):String(x[key]??"");
  let list=visibleItems.filter(x=>[x.issue,x.client,x.owner,x.notes].join(" ").toLowerCase().includes(q)&&(!ownerVal||x.owner===ownerVal)&&(!st||st==="all"||(st==="open"?!isClosed(x):st==="closed"?isClosed(x):st==="done"?!isClosed(x)&&+x.progress===100:st==="todo"?!isClosed(x)&&+x.progress===0:st==="progress"?!isClosed(x)&&+x.progress>0&&+x.progress<80:st==="near"?!isClosed(x)&&+x.progress>=80&&+x.progress<100:false))&&Object.entries(columnFilters).every(([key,value])=>columnValue(x,key).toLowerCase().includes(value)));
